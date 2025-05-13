@@ -63,6 +63,12 @@
             <version>1.18.30</version>
         </dependency>
 
+        <!-- HikariCP 数据库连接池 -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>4.0.3</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -85,5 +91,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
