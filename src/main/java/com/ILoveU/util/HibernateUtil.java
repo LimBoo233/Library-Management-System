@@ -10,8 +10,9 @@ public class HibernateUtil {
     static {
         try {
             // 创建SessionFactory，默认会读取 hibernate.cfg.xml 文件
-            Configuration configuration = new Configuration().configure();
-            sessionFactory = configuration.buildSessionFactory();
+            sessionFactory = new Configuration().
+                    configure().
+                    buildSessionFactory();
         } catch (Throwable ex) {
             // 记录初始化失败的日志
             Log.Instance().severe("Initial SessionFactory creation failed." + ex);

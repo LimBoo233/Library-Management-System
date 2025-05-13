@@ -3,7 +3,7 @@ package com.ILoveU.model;
 import javax.persistence.*;
 
 @Entity // 标识此类为Hibernate实体类
-@Table(name = "Users") // 指定对应的数据库表名
+@Table(name = "users") // 指定对应的数据库表名
 public class User {
     @Id // 标识该字段为主键
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 主键生成策略为自增
