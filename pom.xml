@@ -17,7 +17,6 @@
         <jakarta.servlet.version>5.0.0</jakarta.servlet.version>
         <gson.version>2.10.1</gson.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
-        <slf4j.version>1.7.32</slf4j.version>
     </properties>
 
     <dependencies>
@@ -55,6 +54,13 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
+        </dependency>
+
+        <!-- Lombok 库，用于简化 Java 代码编写 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
         </dependency>
 
     </dependencies>

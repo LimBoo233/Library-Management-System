@@ -1,7 +1,16 @@
 package com.ILoveU.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity // 标识此类为Hibernate实体类
 @Table(name = "users") // 指定对应的数据库表名
 public class User {
@@ -18,45 +27,4 @@ public class User {
 
     @Column(name = "password", nullable = false, length = 255) // 映射到 'password' 列
     private String password;
-
-    public User() {}
-
-    public User(int id, String name, String account, String password) {
-        this.id = id;
-        this.name = name;
-        this.account = account;
-        this.password = password;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getAccount() {
-        return account;
-    }
-
-    public void setAccount(String account) {
-        this.account = account;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }
