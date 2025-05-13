@@ -137,20 +137,21 @@ public class AuthServlet extends HttpServlet {
             Log.Instance().info("Session created/updated for user: " + userToStoreInSession.get("account") + ", Session ID: " + session.getId()); // 日志
         }
 
-        // 将Service层返回的Map转换为JSON字符串并发送给客户端
-        if (serviceResult != null) {
-            // 使用ServletUtil中的toJson方法
-            out.print(ServletUtil.toJson(serviceResult));
-        } else {
-            // 兜底，如果serviceResult是null
+
+        if (serviceResult == null) {
             serviceResult = new HashMap<>();
             serviceResult.put("success", false);
             serviceResult.put("message", "无效的请求路径或发生错误");
         }
 
+        // 将Service层返回的Map转换为JSON字符串并发送给客户端
+        out.print(ServletUtil.toJson(serviceResult));
+
         // 确保所有缓冲的输出都被发送
         out.flush();
     }
+
+
 
     @Override
     public void destroy() {
