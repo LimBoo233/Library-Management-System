@@ -1,12 +1,20 @@
+// 文件: com/ILoveU/controller/AuthServlet.java
 package com.ILoveU.servlet;
 
-import com.ILoveU.service.UserService;
+import com.ILoveU.dto.ApiErrorResponse;
+import com.ILoveU.dto.UserDTO;
+import com.ILoveU.exception.AuthenticationException;
+import com.ILoveU.exception.DuplicateResourceException;
+import com.ILoveU.exception.OperationFailedException;
+import com.ILoveU.exception.ValidationException;
 import com.ILoveU.service.Impl.UserServiceImpl;
-import com.ILoveU.util.Log;
+import com.ILoveU.service.UserService;
+
 import com.ILoveU.util.ServletUtil;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -16,147 +24,181 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
-/**
- * AuthServlet负责处理用户认证相关的请求，包括：
- * - POST /api/auth/register : 用户注册
- * - POST /api/auth/login   : 用户登录
- * - POST /api/auth/logout  : 用户注销
- * 它使用HttpSession来管理用户会话。
- */
+import java.util.List;
+
+// 仅用于logout的简单成功响应
+import java.util.Map;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @WebServlet("/api/auth/*")
 public class AuthServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(AuthServlet.class); // SLF4J Logger
 
     private UserService userService;
 
-    /**
-     * Servlet初始化方法，在Servlet第一次被创建时调用。
-     * 这里我们实例化UserService和Gson。
-     *
-     * @throws ServletException 如果初始化失败
-     */
     @Override
     public void init() throws ServletException {
         super.init();
-        this.userService = new UserServiceImpl();
-        Log.Instance().info("AuthServlet initialized."); // 打印日志，确认初始化
+        this.userService = new UserServiceImpl(); // 实例化UserService
+        logger.info("AuthServlet initialized."); // 使用SLF4J记录日志
     }
 
-    /**
-     * 处理POST请求。根据URL路径的不同部分（如 /register, /login, /logout）执行相应的操作。
-     *
-     * @param request  HttpServletRequest对象，包含客户端请求信息
-     * @param response HttpServletResponse对象，用于向客户端发送响应
-     * @throws ServletException 如果发生Servlet相关错误
-     * @throws IOException      如果发生输入输出错误
-     */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // 获取URL中 /api/auth/* 后面的部分，例如 "/register"
-        String pathInfo = request.getPathInfo();
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-        // 设置响应内容类型为JSON，编码为UTF-8
+        String pathInfo = request.getPathInfo();
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // 获取用于向客户端发送响应的PrintWriter
-        PrintWriter out = response.getWriter();
-
-        // 用于存储UserService返回的结果
-        Map<String, Object> serviceResult = null;
-        // 标记登录是否成功，以便后续创建Session
-        boolean loginSuccess = false;
-        // 登录成功后要存入Session的用户信息
-        Map<String, Object> userToStoreInSession = null;
+        UserDTO successUserDTO = null; // 用于存储注册或登录成功的UserDTO
+        Object successResponseObject = null; // 用于最终序列化为JSON的成功响应对象
 
         try {
-            JsonObject requestBody = ServletUtil.getJsonFromRequestBody(request);
+            JsonObject jsonRequest = ServletUtil.getJsonFromRequestBody(request);
 
-            String account = null, password = null, name = null;
+            String account = null;
+            String password = null;
+            String name = null; // 仅注册时需要
 
-            if (requestBody != null) {
-                account = requestBody.get("account").getAsString();
-                password = requestBody.get("password").getAsString();
+            if (jsonRequest != null) {
+                // 安全地获取JSON属性
+                if (jsonRequest.has("account") && !jsonRequest.get("account").isJsonNull()) {
+                    account = jsonRequest.get("account").getAsString();
+                }
+                if (jsonRequest.has("password") && !jsonRequest.get("password").isJsonNull()) {
+                    password = jsonRequest.get("password").getAsString();
+                }
             }
 
-            // 根据pathInfo判断执行哪个操作
             if ("/register".equals(pathInfo)) {
-                if (requestBody != null) {
-                    name = requestBody.has("name") ? requestBody.get("name").getAsString() : null;
+                if (jsonRequest != null && jsonRequest.has("name") && !jsonRequest.get("name").isJsonNull()) {
+                    // API规范中注册请求体是 "username", "account", "password"
+                    // 假设 "username" 对应我们User实体的 "name"
+                    name = jsonRequest.get("username").getAsString(); // 根据API规范调整字段名
+                } else if (jsonRequest != null && jsonRequest.has("name") && !jsonRequest.get("name").isJsonNull()) {
+                    // 兼容旧的 "name" 字段，如果前端还未更新
+                    name = jsonRequest.get("name").getAsString();
                 }
-                Log.Instance().info("Handling /register request for account: " + account);
-                serviceResult = userService.registerUser(account, password, name);
-            } else if ("/login".equals(pathInfo)) {
-                serviceResult = userService.loginUser(account, password);
-                // 检查登录是否成功，并获取用户信息以便存入Session
-                if ((Boolean) serviceResult.get("success")) {
-                    loginSuccess = true;
-                    userToStoreInSession = (Map<String, Object>) serviceResult.get("user");
-                }
-            } else if ("/logout".equals(pathInfo)) {
-                // 获取现有Session，不创建新的
-                HttpSession session = request.getSession(false);
 
+
+                logger.info("Handling /register request for account: {}", account);
+                successUserDTO = userService.registerUser(account, password, name);
+                response.setStatus(HttpServletResponse.SC_CREATED); // 201 Created
+                successResponseObject = successUserDTO; // 直接返回UserDTO，符合API规范
+
+            } else if ("/login".equals(pathInfo)) {
+                logger.info("Handling /login request for account: {}", account);
+                successUserDTO = userService.loginUser(account, password);
+
+                // 登录成功，创建Session
+                HttpSession session = request.getSession(true);
+                session.setAttribute("loggedInUser", successUserDTO); // 将UserDTO存入Session
+                logger.info("Session created/updated for user: {}, Session ID: {}", successUserDTO.getAccount(), session.getId());
+
+                response.setStatus(HttpServletResponse.SC_OK); // 200 OK
+
+                // 根据API规范，登录成功返回 {"user": UserDTO} (因为我们不用JWT，所以token部分省略)
+                Map<String, Object> tempMap = new HashMap<>();
+                tempMap.put("user", successUserDTO);
+                successResponseObject = tempMap;
+
+
+            } else if ("/logout".equals(pathInfo)) {
+                logger.info("Handling /logout request");
+                HttpSession session = request.getSession(false);
                 if (session != null) {
-                    String userAccountInSession = "UnknownUser";
-                    if (session.getAttribute("loggedInUser") != null) {
-                        Map<String, Object> loggedInUser = (Map<String, Object>) session.getAttribute("loggedInUser");
-                        userAccountInSession = (String) loggedInUser.get("account");
-                    }
-                    Log.Instance().info("Invalidating session for user: " + userAccountInSession + ", Session ID: " + session.getId());
-                    // 使Session失效
+                    UserDTO loggedInUser = (UserDTO) session.getAttribute("loggedInUser");
+                    String userAccountInSession = (loggedInUser != null) ? loggedInUser.getAccount() : "UnknownUser";
+                    logger.info("Invalidating session for user: {}, Session ID: {}", userAccountInSession, session.getId());
                     session.invalidate();
                 }
+                response.setStatus(HttpServletResponse.SC_OK); // 200 OK
 
-                serviceResult = new HashMap<>();
-                serviceResult.put("success", true);
-                serviceResult.put("message", "用户已成功注销。");
+                // API规范未明确定义logout成功响应体，可以返回简单成功消息
+                Map<String, Object> tempMap = new HashMap<>();
+                tempMap.put("message", "用户已成功注销。");
+                successResponseObject = tempMap;
+
+
             } else {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                Log.Instance().severe("AuthServlet: 意外请求路径\n" + pathInfo);
+                logger.warn("AuthServlet: 未找到的请求路径: {}", pathInfo);
+                sendErrorResponse(response, request, HttpServletResponse.SC_NOT_FOUND, "Not Found", "请求的认证接口未找到。");
+                return; // 提前返回，不执行后续的成功响应发送
             }
+
+            // 如果代码执行到这里，表示操作成功
+            if (successResponseObject != null) {
+                PrintWriter out = response.getWriter();
+                out.print(ServletUtil.toJson(successResponseObject));
+                out.flush();
+            } else if (successUserDTO != null) { // 兜底，如果successResponseObject未被特定设置
+                PrintWriter out = response.getWriter();
+                out.print(ServletUtil.toJson(successUserDTO));
+                out.flush();
+            }
+
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error for path {}: {}", request.getRequestURI(), e.getMessage());
+            sendErrorResponse(response, request, HttpServletResponse.SC_BAD_REQUEST, "Bad Request", e.getMessage(), e.getErrors());
+        } catch (DuplicateResourceException e) {
+            logger.warn("Duplicate resource error for path {}: {}", request.getRequestURI(), e.getMessage());
+            // API规范中账号已存在是400 Bad Request
+            sendErrorResponse(response, request, HttpServletResponse.SC_BAD_REQUEST, "Bad Request", e.getMessage());
+        } catch (AuthenticationException e) {
+            logger.warn("Authentication failed for path {}: {}", request.getRequestURI(), e.getMessage());
+            sendErrorResponse(response, request, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", e.getMessage());
+        } catch (OperationFailedException e) {
+            logger.error("Operation failed for path {}: {}", request.getRequestURI(), e.getMessage(), e.getCause());
+            sendErrorResponse(response, request, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error", e.getMessage());
         } catch (JsonSyntaxException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            Log.Instance().severe("AuthServlet: JSON解析错误\n" + e.getMessage());
-        } catch (IOException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            Log.Instance().severe("AuthServlet: 获取请求体失败\n" + e.getMessage());
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            Log.Instance().severe("AuthServlet: 发生意外错误\n" + e.getMessage());
+            logger.error("JSON Syntax Error for path {}: {}", request.getRequestURI(), e.getMessage(), e);
+            sendErrorResponse(response, request, HttpServletResponse.SC_BAD_REQUEST, "Bad Request", "请求的JSON格式无效: " + e.getMessage());
+        } catch (IOException e) { // 由ServletUtil.getJsonFromRequestBody抛出
+            logger.error("IOException while reading request body for path {}: {}", request.getRequestURI(), e.getMessage(), e);
+            sendErrorResponse(response, request, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error", "读取请求数据时发生错误。");
+        } catch (Exception e) { // 捕获所有其他未预料的异常
+            logger.error("Unexpected error for path {}: {}", request.getRequestURI(), e.getMessage(), e);
+            sendErrorResponse(response, request, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error", "服务器发生意外错误，请稍后再试。");
         }
+    }
 
-        // 如果登录成功，创建或获取HttpSession并存储用户信息
-        if (loginSuccess && userToStoreInSession != null) {
-            // true表示如果session不存在则创建
-            HttpSession session = request.getSession(true);
-            // 将用户信息Map存入session
-            session.setAttribute("loggedInUser", userToStoreInSession);
-            Log.Instance().info("Session created/updated for user: " + userToStoreInSession.get("account") + ", Session ID: " + session.getId()); // 日志
+    /**
+     * 辅助方法，用于发送符合API规范的错误响应。
+     */
+    private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message, List<ApiErrorResponse.FieldErrorDetail> fieldErrors) throws IOException {
+        // 确保即使已经写入了部分响应（理论上不应该），也先重置
+        if (response.isCommitted()) {
+            logger.error("Response already committed. Cannot send error response for status {} and message: {}", statusCode, message);
+            return;
         }
+        response.setStatus(statusCode); // 设置HTTP状态码
 
+        ApiErrorResponse errorResponsePojo = new ApiErrorResponse(statusCode, errorShortDescription, message, request.getRequestURI(), fieldErrors);
 
-        if (serviceResult == null) {
-            serviceResult = new HashMap<>();
-            serviceResult.put("success", false);
-            serviceResult.put("message", "无效的请求路径或发生错误");
-        }
-
-        // 将Service层返回的Map转换为JSON字符串并发送给客户端
-        out.print(ServletUtil.toJson(serviceResult));
-
-        // 确保所有缓冲的输出都被发送
+        PrintWriter out = response.getWriter();
+        out.print(ServletUtil.toJson(errorResponsePojo)); // 使用ServletUtil进行序列化
         out.flush();
     }
 
+    // 重载一个不带字段错误详情的版本
+    private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message) throws IOException {
+        sendErrorResponse(response, request, statusCode, errorShortDescription, message, null);
+    }
 
 
     @Override
     public void destroy() {
         super.destroy();
-        Log.Instance().info("AuthServlet destroyed.");
+        logger.info("AuthServlet destroyed.");
     }
-
 }

@@ -18,6 +18,11 @@
 --
 -- Table structure for table `authors`
 --
+CREATE DATABASE IF NOT EXISTS library_system
+    DEFAULT CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE library_system;
 
 DROP TABLE IF EXISTS `authors`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -105,6 +110,7 @@ DROP TABLE IF EXISTS `books`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `books` (
   `book_id` int NOT NULL AUTO_INCREMENT,
+  `publish_year` int NOT NULL DEFAULT '0' COMMENT '出版年份',
   `title` varchar(255) NOT NULL COMMENT '书名',
   `isbn` varchar(13) NOT NULL COMMENT 'ISBN（13位）',
   `num_copies_total` int NOT NULL DEFAULT '0' COMMENT '总库存',
@@ -276,8 +282,6 @@ CREATE TABLE `users` (
   `account` varchar(255) NOT NULL COMMENT '登录账号',
   `password` varchar(255) NOT NULL COMMENT '密码（加密存储）',
   `username` varchar(100) NOT NULL COMMENT '显示名称',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

@@ -3,6 +3,7 @@ package com.ILoveU.dao.impl;
 import com.ILoveU.dao.UserDAO;
 import com.ILoveU.model.User;
 import com.ILoveU.util.HibernateUtil;
+import com.ILoveU.util.Log;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
@@ -34,16 +35,16 @@ public class UserDaoImpl implements UserDAO {
     @Override
     public User findUserById(int id) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "FROM User U WHERE U.id = :idParam";
+            String hql = "FROM User u WHERE u.id = :idParam";
 
             Query<User> query = session.createQuery(hql, User.class);
             query.setParameter("idParam", id);
 
             return query.uniqueResultOptional().orElse(null);
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            Log.Instance().severe("查询用户时发生错误。" + e.getMessage());
         }
+        return null;
     }
 
     @Override
@@ -63,13 +64,12 @@ public class UserDaoImpl implements UserDAO {
             // uniqueResultOptional() 返回一个 Optional<User>
             // 如果没有找到结果，Optional为空；如果找到一个，Optional包含该结果
             // 如果找到多个结果，会抛出 NonUniqueResultException (如果账户名不是唯一的，这里需要注意)
-            // 假设账户名在数据库中是唯一的
-
             return query.uniqueResultOptional().orElse(null);
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            Log.Instance().severe("查询用户时发生错误。" + e.getMessage());
         }
+        return null;
+
     }
 
     @Override

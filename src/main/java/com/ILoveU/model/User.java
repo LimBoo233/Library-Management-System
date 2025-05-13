@@ -16,8 +16,8 @@ import javax.persistence.*;
 public class User {
     @Id // 标识该字段为主键
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 主键生成策略为自增
-    @Column(name = "id") // 映射到 'user_id' 列
-    private int id;
+    @Column(name = "user_id") // 映射到 'user_id' 列
+    private Integer id;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
