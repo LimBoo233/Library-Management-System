@@ -17,21 +17,25 @@
 </properties>
 
     <dependencies>
+        <!-- MySQL 驱动，用于连接 MySQL 数据库 -->
         <dependency>
             <groupId>mysql</groupId> <artifactId>mysql-connector-java</artifactId> <version>${mysql.connector.version}</version> </dependency>
 
+        <!-- Hibernate ORM 框架，用于对象关系映射 -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibernate.version}</version>
         </dependency>
 
+        <!-- JPA 规范接口，配合 Hibernate 使用 -->
         <dependency>
             <groupId>javax.persistence</groupId>
             <artifactId>javax.persistence-api</artifactId>
             <version>2.2</version>
         </dependency>
 
+        <!-- Servlet API，Web 项目基础依赖 -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -39,6 +43,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Gson 库，用于 JSON 解析和生成 -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
