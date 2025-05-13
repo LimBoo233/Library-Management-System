@@ -6,7 +6,6 @@ import com.ILoveU.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
-import com.ILoveU.util.Log;
 
 public class UserDaoImpl implements UserDAO {
     @Override
