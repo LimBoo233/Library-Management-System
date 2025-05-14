@@ -3,7 +3,8 @@ package com.ILoveU.dao.impl;
 import com.ILoveU.dao.PressDAO;
 import com.ILoveU.model.Press;
 import com.ILoveU.util.HibernateUtil;
-import com.ILoveU.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PressDAOImpl implements PressDAO {
+    private static final Logger logger = LoggerFactory.getLogger(PressDAOImpl.class);
 
     @Override
     public List<Press> findPresses(int page, int pageSize) {
@@ -29,7 +31,7 @@ public class PressDAOImpl implements PressDAO {
 
             return query.list();
         } catch (Exception e) {
-            Log.Instance().severe("查询出版社时发生错误。" + e.getMessage());
+            logger.error("查询出版社时发生错误: {}", e.getMessage(), e);
         }
 
         return new ArrayList<>();
@@ -45,7 +47,7 @@ public class PressDAOImpl implements PressDAO {
 
             return query.uniqueResultOptional().orElse(null);
         } catch (Exception e) {
-            Log.Instance().severe("查询出版社时发生错误。" + e.getMessage());
+            logger.error("查询出版社时发生错误: {}", e.getMessage(), e);
         }
         return null;
     }
@@ -63,7 +65,7 @@ public class PressDAOImpl implements PressDAO {
             if (transaction != null) {
                 transaction.rollback();
             }
-            Log.Instance().severe("添加出版社时发生错误。" + e.getMessage());
+            logger.error("添加出版社时发生错误: {}", e.getMessage(), e);
         }
         return null;
     }
@@ -80,7 +82,7 @@ public class PressDAOImpl implements PressDAO {
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();
             }
-            Log.Instance().severe("更新出版社 {} 时发生错误。" + press.getName());
+            logger.error("更新出版社 {} 时发生错误: {}", press.getName(), e.getMessage(), e);
         }
 
         return null;
@@ -95,19 +97,18 @@ public class PressDAOImpl implements PressDAO {
             if (press != null) {
                 session.delete(press);
                 transaction.commit();
-                Log.Instance().info(String.format("出版社 ID: %s 已成功从数据库删除。", press.getName()));
+                logger.info("出版社 ID: {}, 名称: {} 已成功从数据库删除", pressId, press.getName());
                 return true;
             } else {
-                Log.Instance().severe(String.format("尝试删除出版社失败：未找到ID为 %s 的出版社。", pressId));
+                logger.warn("尝试删除出版社失败：未找到ID为 {} 的出版社", pressId);
                 if(transaction.isActive()) transaction.commit(); // 如果没找到，也需要提交（或回滚）事务，虽然没做任何修改
                 return false;
             }
         } catch (Exception e) { // 需要捕获更具体的异常，例如 ConstraintViolationException
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();
-
             }
-            Log.Instance().severe(String.format("删除出版社 ID: %d 时发生错误。", pressId));
+            logger.error("删除出版社 ID: {} 时发生错误: {}", pressId, e.getMessage(), e);
         }
         
         return false;
@@ -120,9 +121,24 @@ public class PressDAOImpl implements PressDAO {
             Query<Long> query = session.createQuery(hql, Long.class);
             return query.uniqueResultOptional().orElse(0L);
         } catch (Exception e) {
-            Log.Instance().severe("统计出版社总数时发生错误。" + e.getMessage());
+            logger.error("统计出版社总数时发生错误: {}", e.getMessage(), e);
         }
         return 0L;
+    }
+
+    @Override
+    public boolean existsByNameIgnoreCase(String name) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "SELECT COUNT(p.name) FROM Press p WHERE p.name = :nameParam";
+            Query<Long> query = session.createQuery(hql, Long.class);
+            query.setParameter("nameParam", name);
+
+            Long count = query.uniqueResult();
+            return count != null && count > 0;
+        } catch (Exception e) {
+            logger.error("检查出版社是否存在时发生错误: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
 }

@@ -2,9 +2,11 @@ package com.ILoveU.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PasswordUtil {
-
+    private static final Logger logger = LoggerFactory.getLogger(PasswordUtil.class);
     private static final String HASH_ALGORITHM = "SHA-256";
 
     public static String hashPassword(String password) {
@@ -20,7 +22,7 @@ public class PasswordUtil {
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             // 这种异常理论上不应该发生，因为SHA-256是标准算法
-            Log.Instance().severe("密码哈希算法未找到: " + e.getMessage());
+            logger.error("密码哈希算法未找到: {}", e.getMessage(), e);
             throw new RuntimeException("password hash transformation failed ", e);
         }
     }

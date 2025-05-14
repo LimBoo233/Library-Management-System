@@ -24,9 +24,6 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 
@@ -40,7 +37,7 @@ import org.slf4j.LoggerFactory;
 @WebServlet("/api/auth/*")
 public class AuthServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(AuthServlet.class); // SLF4J Logger
+    private static final Logger logger = LoggerFactory.getLogger(AuthServlet.class);
 
     private UserService userService;
 
@@ -80,7 +77,7 @@ public class AuthServlet extends HttpServlet {
             }
 
             if ("/register".equals(pathInfo)) {
-                if (jsonRequest != null && jsonRequest.has("name") && !jsonRequest.get("name").isJsonNull()) {
+                if (jsonRequest != null && jsonRequest.has("username") && !jsonRequest.get("username").isJsonNull()) {
                     // API规范中注册请求体是 "username", "account", "password"
                     // 假设 "username" 对应我们User实体的 "name"
                     name = jsonRequest.get("username").getAsString(); // 根据API规范调整字段名
@@ -140,7 +137,8 @@ public class AuthServlet extends HttpServlet {
                 PrintWriter out = response.getWriter();
                 out.print(ServletUtil.toJson(successResponseObject));
                 out.flush();
-            } else if (successUserDTO != null) { // 兜底，如果successResponseObject未被特定设置
+            } else if (successUserDTO != null) {
+                // 兜底，如果successResponseObject未被特定设置
                 PrintWriter out = response.getWriter();
                 out.print(ServletUtil.toJson(successUserDTO));
                 out.flush();
@@ -177,22 +175,12 @@ public class AuthServlet extends HttpServlet {
      */
     private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message, List<ApiErrorResponse.FieldErrorDetail> fieldErrors) throws IOException {
         // 确保即使已经写入了部分响应（理论上不应该），也先重置
-        if (response.isCommitted()) {
-            logger.error("Response already committed. Cannot send error response for status {} and message: {}", statusCode, message);
-            return;
-        }
-        response.setStatus(statusCode); // 设置HTTP状态码
-
-        ApiErrorResponse errorResponsePojo = new ApiErrorResponse(statusCode, errorShortDescription, message, request.getRequestURI(), fieldErrors);
-
-        PrintWriter out = response.getWriter();
-        out.print(ServletUtil.toJson(errorResponsePojo)); // 使用ServletUtil进行序列化
-        out.flush();
+        ServletUtil.sendErrorResponse(response, request, statusCode, errorShortDescription, message, fieldErrors, logger);
     }
 
     // 重载一个不带字段错误详情的版本
     private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message) throws IOException {
-        sendErrorResponse(response, request, statusCode, errorShortDescription, message, null);
+        ServletUtil.sendErrorResponse(response, request, statusCode, errorShortDescription, message, null);
     }
 
 

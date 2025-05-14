@@ -30,9 +30,10 @@ public class PageDTO<T> {
             this.pageSize = pageSize;
             this.totalItems = totalItems;
             this.totalPages = (pageSize == 0 || totalItems == 0) ? 1 : (int) Math.ceil((double) totalItems / pageSize);
-            if (this.totalPages == 0 && totalItems > 0) this.totalPages = 1; // 至少1页如果条目>0
-            if (this.totalPages == 0 && totalItems == 0) this.totalPages = 0; // 如果没有条目，总页数为0
+            if (totalPages == 0) {
+                // 至少1页如果条目>0，如果没有条目，总页数为0
+                this.totalPages = totalItems > 0 ? 1 : 0;
+            }
         }
     }
-
 }

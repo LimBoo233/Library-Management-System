@@ -21,12 +21,8 @@ public class UserServiceImpl implements UserService {
     private final UserDAO userDAO;
 
     public UserServiceImpl() {
-        this.userDAO = new UserDaoImpl(); // 或者通过构造函数注入
-    }
-
-    // 用于测试的构造函数
-    public UserServiceImpl(UserDAO userDAO) {
-        this.userDAO = userDAO;
+        // 或者通过构造函数注入
+        this.userDAO = new UserDaoImpl();
     }
 
     @Override

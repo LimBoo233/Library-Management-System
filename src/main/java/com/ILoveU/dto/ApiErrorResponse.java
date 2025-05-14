@@ -2,7 +2,6 @@ package com.ILoveU.dto;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,7 +18,9 @@ public class ApiErrorResponse {
     private String error;
     private String message;
     private String path;
-    private List<FieldErrorDetail> errors; // 可选的字段级错误列表
+
+    // 可选的字段级错误列表
+    private List<FieldErrorDetail> errors;
 
     // 构造函数
     public ApiErrorResponse(int status, String error, String message, String path) {

@@ -3,12 +3,15 @@ package com.ILoveU.dao.impl;
 import com.ILoveU.dao.UserDAO;
 import com.ILoveU.model.User;
 import com.ILoveU.util.HibernateUtil;
-import com.ILoveU.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 public class UserDaoImpl implements UserDAO {
+    private static final Logger logger = LoggerFactory.getLogger(UserDaoImpl.class);
+    
     @Override
     public User addUser(User user) {
         Transaction transaction = null;
@@ -20,13 +23,14 @@ public class UserDaoImpl implements UserDAO {
             session.save(user);
             // 提交事务
             transaction.commit();
+            logger.info("成功添加用户: {}", user.getAccount());
             return user;
         } catch (Exception e) {
             // 如果发生异常，回滚事务
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            logger.error("添加用户失败: {}", e.getMessage(), e);
             return null;
         }
         // 关闭 Session
@@ -40,9 +44,13 @@ public class UserDaoImpl implements UserDAO {
             Query<User> query = session.createQuery(hql, User.class);
             query.setParameter("idParam", id);
 
-            return query.uniqueResultOptional().orElse(null);
+            User user = query.uniqueResultOptional().orElse(null);
+            if (user == null) {
+                logger.debug("未找到ID为{}的用户", id);
+            }
+            return user;
         } catch (Exception e) {
-            Log.Instance().severe("查询用户时发生错误。" + e.getMessage());
+            logger.error("查询用户ID:{}时发生错误: {}", id, e.getMessage(), e);
         }
         return null;
     }
@@ -64,12 +72,15 @@ public class UserDaoImpl implements UserDAO {
             // uniqueResultOptional() 返回一个 Optional<User>
             // 如果没有找到结果，Optional为空；如果找到一个，Optional包含该结果
             // 如果找到多个结果，会抛出 NonUniqueResultException (如果账户名不是唯一的，这里需要注意)
-            return query.uniqueResultOptional().orElse(null);
+            User user = query.uniqueResultOptional().orElse(null);
+            if (user == null) {
+                logger.debug("未找到账户为{}的用户", account);
+            }
+            return user;
         } catch (Exception e) {
-            Log.Instance().severe("查询用户时发生错误。" + e.getMessage());
+            logger.error("查询用户账户:{}时发生错误: {}", account, e.getMessage(), e);
         }
         return null;
-
     }
 
     @Override
@@ -90,10 +101,9 @@ public class UserDaoImpl implements UserDAO {
 
             return count != null && count > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("检查账户{}是否存在时发生错误: {}", account, e.getMessage(), e);
             // 在发生错误时，保守地返回false或根据业务需求抛出异常
             return false;
         }
     }
-    
 }

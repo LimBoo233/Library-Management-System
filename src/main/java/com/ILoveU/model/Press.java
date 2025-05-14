@@ -17,7 +17,7 @@ public class Press {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "press_id")
-    private int pressId;
+    private Integer pressId;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
