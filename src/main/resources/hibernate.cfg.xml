@@ -19,12 +19,14 @@
 
         <mapping class="com.ILoveU.model.User"/>
         <mapping class="com.ILoveU.model.Book"/>
-<!--        <mapping class="com.example.model.Author"/>-->
+        <mapping class="com.ILoveU.model.Author"/>
         <mapping class="com.ILoveU.model.Press"/>
-<!--        <mapping class="com.example.model.Tag"/>-->
-<!--        <mapping class="com.example.model.Loan"/>-->
-<!--        <mapping class="com.example.model.BookAuthor"/>-->
-<!--        <mapping class="com.example.model.BookTag"/>-->
+        <mapping class="com.ILoveU.model.Tag"/>
+        <mapping class="com.ILoveU.model.Loan"/>
+
+        <!--  中间表，目前需求来看暂不需要这两个实体类-->
+        <!-- <mapping class="com.ILoveU.model.BookAuthor"/> -->
+        <!-- <mapping class="com.ILoveU.model.BookTag"/> -->
 
     </session-factory>
 </hibernate-configuration>

@@ -58,7 +58,6 @@ DROP TABLE IF EXISTS `book_authors`;
 CREATE TABLE `book_authors` (
   `book_id` int NOT NULL,
   `author_id` int NOT NULL,
-  `contribution` varchar(50) DEFAULT NULL COMMENT '作者角色（如：作者、译者）',
   PRIMARY KEY (`book_id`,`author_id`),
   KEY `author_id` (`author_id`),
   CONSTRAINT `book_authors_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`),
@@ -146,11 +145,9 @@ CREATE TABLE `loans` (
   `loan_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL COMMENT '用户ID',
   `book_id` int NOT NULL COMMENT '图书ID',
-  `checkout_date` date NOT NULL COMMENT '借出日期',
+  `loan_date` date NOT NULL COMMENT '借出日期',
   `due_date` date NOT NULL COMMENT '到期日期（默认checkout_date + 14天）',
   `return_date` date DEFAULT NULL COMMENT '归还日期（可为空）',
-  `is_overdue` tinyint(1) DEFAULT '0' COMMENT '是否逾期（0=否，1=是）',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`loan_id`),
   KEY `user_id` (`user_id`),
   KEY `book_id` (`book_id`),
@@ -212,8 +209,7 @@ DELIMITER ;;
             WHERE book_id = NEW.book_id;
         END IF;
         
-        -- 标记是否逾期
-        SET NEW.is_overdue = IF(NEW.return_date > NEW.due_date, 1, 0);
+
     END IF;
 END */;;
 DELIMITER ;

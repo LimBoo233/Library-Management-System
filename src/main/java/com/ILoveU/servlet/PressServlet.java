@@ -237,14 +237,11 @@ public class PressServlet extends HttpServlet {
         }
     }
 
-    /**
-     * 辅助方法，用于发送符合API规范的错误响应。
-     */
+
     private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message, List<ApiErrorResponse.FieldErrorDetail> fieldErrors) throws IOException {
         ServletUtil.sendErrorResponse(response, request, statusCode, errorShortDescription, message, fieldErrors, logger);
     }
 
-    // 重载一个不带字段错误详情的版本
     private void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message) throws IOException {
         sendErrorResponse(response, request, statusCode, errorShortDescription, message, null);
     }

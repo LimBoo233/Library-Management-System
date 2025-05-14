@@ -19,6 +19,6 @@ public class Press {
     @Column(name = "press_id")
     private Integer pressId;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false)
     private String name;
 }
