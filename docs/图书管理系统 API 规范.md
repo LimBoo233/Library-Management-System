@@ -89,7 +89,6 @@
 
 ```
 {
-  "token": "<JWT>...",
   "user": {
     "id": 5,
     "username": "张三",

@@ -137,90 +137,37 @@ UNLOCK TABLES;
 --
 -- Table structure for table `loans`
 --
-
+-- 先删除旧表（如果存在且需要重建）
 DROP TABLE IF EXISTS `loans`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+
+-- 创建新的 loans 表，支持 book_id 为 NULL 并在删除 book 时将 book_id 设为 NULL，同时冗余存储借阅时的书名
 CREATE TABLE `loans` (
-  `loan_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL COMMENT '用户ID',
-  `book_id` int NOT NULL COMMENT '图书ID',
-  `loan_date` date NOT NULL COMMENT '借出日期',
-  `due_date` date NOT NULL COMMENT '到期日期（默认checkout_date + 14天）',
-  `return_date` date DEFAULT NULL COMMENT '归还日期（可为空）',
-  PRIMARY KEY (`loan_id`),
-  KEY `user_id` (`user_id`),
-  KEY `book_id` (`book_id`),
-  CONSTRAINT `loans_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `loans_ibfk_2` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+                         `loan_id` int NOT NULL AUTO_INCREMENT COMMENT '借阅记录ID',
+                         `user_id` int NOT NULL COMMENT '用户ID (外键, 参照 users 表)',
+                         `book_id` int DEFAULT NULL COMMENT '图书ID (外键, 参照 books 表, 允许为NULL)', -- 允许为NULL以支持ON DELETE SET NULL
+                         `borrowed_book_title` VARCHAR(255) DEFAULT NULL COMMENT '借阅时记录的图书标题 (冗余字段, 用于book_id为NULL时参考)', -- 新增字段
+                         `loan_date` date NOT NULL COMMENT '借出日期',
+                         `due_date` date NOT NULL COMMENT '应归还日期',
+                         `return_date` date DEFAULT NULL COMMENT '实际归还日期 (允许为NULL)',
+                         PRIMARY KEY (`loan_id`),
+                         KEY `idx_user_id` (`user_id`), -- 为外键创建索引是个好习惯
+                         KEY `idx_book_id` (`book_id`), -- 为外键创建索引是个好习惯
+                         CONSTRAINT `fk_loans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+                             ON DELETE RESTRICT  -- 当用户被删除时，如果该用户还有借阅记录，则阻止删除用户 (这是一个常见的安全设置)
+                             ON UPDATE CASCADE,  -- 如果用户ID更新了，借阅记录中的user_id也跟着更新
+                         CONSTRAINT `fk_loans_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`)
+                             ON DELETE SET NULL  -- 当关联的图书被删除时，将此条借阅记录的 book_id 设置为 NULL
+                             ON UPDATE CASCADE   -- 如果图书ID更新了（虽然主键通常不更新），借阅记录中的book_id也跟着更新
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='图书借阅记录表';
 
---
--- Dumping data for table `loans`
---
+-- 关于触发器的重要提示：
+-- 如果你之前定义了在 loans 表 INSERT 或 UPDATE 时操作 books 表库存的触发器，
+-- 并且这些触发器依赖于 NEW.book_id 或 OLD.book_id，
+-- 当 book_id 因为 ON DELETE SET NULL 变为 NULL 后，这些触发器可能会出错。
+-- 强烈建议将库存管理逻辑完全放在Service层（例如 LoanServiceImpl 中），
+-- 避免在 book_id 可能为 NULL 的情况下依赖触发器去更新 books 表。
+-- 如果你确实需要保留触发器，你需要确保触发器逻辑能够正确处理 book_id 为 NULL 的情况（例如，在 book_id 为 NULL 时不执行更新 books 表的操作）。
 
-LOCK TABLES `loans` WRITE;
-/*!40000 ALTER TABLE `loans` DISABLE KEYS */;
-/*!40000 ALTER TABLE `loans` ENABLE KEYS */;
-UNLOCK TABLES;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_loans_before_insert` BEFORE INSERT ON `loans` FOR EACH ROW BEGIN
-    -- 检查库存
-    IF (SELECT num_copies_available FROM books WHERE book_id = NEW.book_id) <= 0 THEN
-        SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = '图书无可用库存，无法借出';
-    END IF;
-    -- 减少可用库存
-    UPDATE books SET num_copies_available = num_copies_available - 1 
-    WHERE book_id = NEW.book_id;
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_loans_before_update` BEFORE UPDATE ON `loans` FOR EACH ROW BEGIN
-    IF NEW.return_date IS NOT NULL AND OLD.return_date IS NULL THEN
-        -- 检查库存是否需要增加（防止触发器重复调用）
-        IF (SELECT num_copies_available FROM books WHERE book_id = NEW.book_id) < 
-           (SELECT num_copies_total FROM books WHERE book_id = NEW.book_id) THEN
-            
-            -- 增加可用库存
-            UPDATE books 
-            SET num_copies_available = num_copies_available + 1 
-            WHERE book_id = NEW.book_id;
-        END IF;
-        
-
-    END IF;
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-
---
--- Table structure for table `presses`
---
 
 DROP TABLE IF EXISTS `presses`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

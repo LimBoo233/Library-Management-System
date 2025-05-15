@@ -103,7 +103,7 @@ public class PressServiceImpl implements PressService {
         }
 
 
-        if (pressDetailsToUpdateDTO.getName() == null) {
+        if (pressDetailsToUpdateDTO.getName() == null || pressDetailsToUpdateDTO.getName().trim().isEmpty()) {
             logger.error("更新出版社时失败，出版社名称不能为空");
             throw new ValidationException("更新出版社时，出版社名称不能为空");
         }
@@ -113,7 +113,13 @@ public class PressServiceImpl implements PressService {
         // 尝试获取出版社信息
         Press press = null;
         try {
+            if (pressDAO.existsByNameIgnoreCase(newName)) {
+                logger.error("更新出版社ID {} 时，检查出版社名称 '{}' 是否存在时发生错误。", pressId, newName);
+                throw new DuplicateResourceException("出版社名称已存在: " + newName);
+            }
+
             press = pressDAO.findPressById(pressId);
+
         } catch (Exception e) {
             logger.error("更新出版社时，检查出版社名称是否存在时发生意外错误: {}", e.getMessage(), e);
             throw new OperationFailedException("更新出版社时，检查出版社名称是否存在时发生意外错误: " + e.getMessage());
@@ -122,11 +128,6 @@ public class PressServiceImpl implements PressService {
         if (press == null) {
             logger.error("更新出版社时失败，找到出版社信息，pressId: {}", pressId);
             throw new ResourceNotFoundException("未找到该出版社");
-        }
-
-        if (pressDAO.existsByNameIgnoreCase(newName)) {
-            logger.error("更新出版社ID {} 时，检查出版社名称 '{}' 是否存在时发生错误。", pressId, newName);
-            throw new DuplicateResourceException("出版社名称已存在: " + newName);
         }
 
         // 更新出版社信息
