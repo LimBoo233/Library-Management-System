@@ -6,7 +6,7 @@ import java.util.Map;
 public class UserServiceTest {
     public static void main(String[] args) {
         UserService userService = new UserServiceImpl();
-        Map<String, Object> result = userService.registerUser(
+        Map<String, Object> result = (Map<String, Object>) userService.registerUser(
                 "Amiya",
                 "Amiya123",
                 "123456awa"
