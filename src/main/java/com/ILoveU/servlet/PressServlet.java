@@ -24,6 +24,8 @@ import java.util.List;
 @WebServlet("/api/presses/*")
 public class PressServlet extends HttpServlet {
 
+    // TODO: 在操作前添加对用户权限（Session）的判断
+
     private static final Logger logger = LoggerFactory.getLogger(PressServlet.class);
     private PressService pressService;
 

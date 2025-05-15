@@ -9,7 +9,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PressDAOImpl implements PressDAO {
@@ -17,9 +17,6 @@ public class PressDAOImpl implements PressDAO {
 
     @Override
     public List<Press> findPresses(int page, int pageSize) {
-        page = Math.max(page, 1);
-        pageSize = Math.max(pageSize, 1);
-
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 
             // 可以根据需要添加 ORDER BY 子句，例如按出版社名称排序: "FROM Press p ORDER BY p.name ASC"
@@ -34,29 +31,23 @@ public class PressDAOImpl implements PressDAO {
             logger.error("查询出版社时发生错误: {}", e.getMessage(), e);
         }
 
-        return new ArrayList<>();
+        return Collections.emptyList();
     }
 
     @Override
     public Press findPressById(int pressId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "FROM Press p WHERE p.pressId = :idParam";
-
-            Query<Press> query = session.createQuery(hql, Press.class);
-            query.setParameter("idParam", pressId);
-
-            return query.uniqueResultOptional().orElse(null);
+            return session.get(Press.class, pressId);
         } catch (Exception e) {
-            logger.error("查询出版社时发生错误: {}", e.getMessage(), e);
+            logger.error("通过ID {} 查询出版社时发生错误: {}", pressId, e.getMessage(), e);
         }
         return null;
     }
 
     @Override
     public Press addPress(Press press) {
-        // TODO
         Transaction transaction = null;
-        try  (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             session.save(press);
             transaction.commit();
@@ -73,18 +64,23 @@ public class PressDAOImpl implements PressDAO {
     @Override
     public Press updatePress(Press press) {
         Transaction transaction = null;
+        Press managedPress; // 用于存储merge返回的受管理对象
+
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.update(press); // 或者 session.merge(press) 如果对象是游离态
+            // 替换update()使用 merge() 方法，它更适合处理游离态对象的更新
+            // merge() 会返回一个与当前Session关联的持久态实例
+            managedPress = (Press) session.merge(press);
             transaction.commit();
-            return press;
+            logger.info("出版社 ID: {} 已成功更新，名称为: '{}'。", managedPress.getPressId(), managedPress.getName());
+            // 返回受管理的持久态对象
+            return managedPress;
         } catch (Exception e) {
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();
             }
-            logger.error("更新出版社 {} 时发生错误: {}", press.getName(), e.getMessage(), e);
+            logger.error("更新出版社 ID: {} 时发生错误: {}", press.getPressId(), e.getMessage(), e);
         }
-
         return null;
     }
 
@@ -101,16 +97,16 @@ public class PressDAOImpl implements PressDAO {
                 return true;
             } else {
                 logger.warn("尝试删除出版社失败：未找到ID为 {} 的出版社", pressId);
-                if(transaction.isActive()) transaction.commit(); // 如果没找到，也需要提交（或回滚）事务，虽然没做任何修改
+                if (transaction.isActive()) transaction.commit(); // 如果没找到，也需要提交（或回滚）事务，虽然没做任何修改
                 return false;
             }
-        } catch (Exception e) { // 需要捕获更具体的异常，例如 ConstraintViolationException
+        } catch (Exception e) { // 可以尝试去捕获更具体的异常，例如 ConstraintViolationException
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();
             }
             logger.error("删除出版社 ID: {} 时发生错误: {}", pressId, e.getMessage(), e);
         }
-        
+
         return false;
     }
 
@@ -129,7 +125,7 @@ public class PressDAOImpl implements PressDAO {
     @Override
     public boolean existsByNameIgnoreCase(String name) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "SELECT COUNT(p.name) FROM Press p WHERE p.name = :nameParam";
+            String hql = "SELECT COUNT(p) FROM Press p WHERE lower(p.name) = lower(:nameParam)";
             Query<Long> query = session.createQuery(hql, Long.class);
             query.setParameter("nameParam", name);
 
