@@ -100,5 +100,4 @@ public interface AuthorDAO {
      * @return 符合条件的作者总数。
      */
     long countAuthorsByNameKeyword(String nameKeyword);
-
 }

@@ -65,13 +65,13 @@ public class AuthorDAOImpl implements AuthorDAO {
     @Override
     public Author updateAuthor(Author author) {
         Transaction transaction = null;
-        Author managedAuthor;
+        Author updatedAuthor;
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            managedAuthor = (Author) session.merge(author);
+            updatedAuthor = (Author) session.merge(author);
             transaction.commit();
-            return managedAuthor;
+            return updatedAuthor;
         } catch (Exception e) {
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();

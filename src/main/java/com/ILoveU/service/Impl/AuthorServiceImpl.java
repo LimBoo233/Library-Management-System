@@ -1,7 +1,9 @@
 package com.ILoveU.service.Impl;
 
 import com.ILoveU.dao.AuthorDAO;
+import com.ILoveU.dao.BookDAO;
 import com.ILoveU.dao.impl.AuthorDAOImpl;
+import com.ILoveU.dao.impl.BookDAOImpl;
 import com.ILoveU.dto.AuthorDTO;
 import com.ILoveU.dto.PageDTO;
 import com.ILoveU.exception.*;
@@ -19,9 +21,11 @@ public class AuthorServiceImpl implements AuthorService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorServiceImpl.class);
     private final AuthorDAO authorDAO;
+    private final BookDAO bookDAO;
 
     public AuthorServiceImpl() {
         this.authorDAO = new AuthorDAOImpl();
+        this.bookDAO = new BookDAOImpl();
     }
 
 
@@ -82,13 +86,10 @@ public class AuthorServiceImpl implements AuthorService {
         }
 
         if (author == null) {
-            logger.warn("未找到作者信息，authorId: {}", authorId);
-            throw new ResourceNotFoundException("未找到该作者");
+            logger.warn("未找到作者，ID: {}", authorId);
+            throw new ResourceNotFoundException("未找到ID为 " + authorId + " 的作者。");
         }
-
-        logger.info("成功查询到作者信息，authorId: {}, name: {} {}", authorId, author.getFirstName(), author.getLastName());
-
-        return new AuthorDTO(author.getAuthorId(), author.getFirstName(), author.getLastName(), author.getBio(), author.getCreatedAt().toString(), author.getUpdatedAt().toString());
+        return convertToAuthorDTO(author);
     }
 
     @Override
@@ -101,18 +102,18 @@ public class AuthorServiceImpl implements AuthorService {
             throw new ValidationException("更新作者时，AuthorDTO参数不能为空");
         }
 
-        if (authorDTO.getFirstName() == null || authorDTO.getLastName() == null || authorDTO.getBio() == null || authorDTO.getCreatedAt() == null || authorDTO.getUpdatedAt() == null) {
+        if (authorDTO.getFirstName() == null || authorDTO.getLastName() == null) {
             logger.error("创建作者时失败，dto必要参数为空");
             throw new ValidationException("更新作者时，dto必要参数为空");
         }
 
         String newFirstName = authorDTO.getFirstName().trim();
         String newLastName = authorDTO.getLastName().trim();
-        String newBio = authorDTO.getBio().trim();
-        String newCreatedAt = authorDTO.getCreatedAt().trim();
-        String newUpdatedAt = authorDTO.getUpdatedAt().trim();
+        String newBio = (authorDTO.getBio() != null) ? authorDTO.getBio().trim() : null;
 
-        if (newFirstName.isEmpty() || newLastName.isEmpty() || newBio.isEmpty() || newCreatedAt.isEmpty() || newUpdatedAt.isEmpty()) {
+        logger.info("尝试创建新作者: {} {}", newFirstName, newLastName);
+
+        if (newFirstName.isEmpty() || newLastName.isEmpty()) {
             logger.error("创建作者时失败，dto必要参数为空");
             throw new ValidationException("更新作者时，dto必要参数为空");
         }
@@ -120,22 +121,34 @@ public class AuthorServiceImpl implements AuthorService {
 
         try {
             if (authorDAO.existsByNameIgnoreCase(authorDTO.getFirstName(), authorDTO.getLastName())) {
-                logger.error("作者已存在: {} {}", authorDTO.getFirstName(), authorDTO.getLastName());
-                throw new DuplicateResourceException("作者已存在: " + authorDTO.getFirstName() + " " + authorDTO.getLastName());
+                logger.warn("创建作者失败：作者 '{} {}' 已存在。", newFirstName, newLastName);
+                throw new DuplicateResourceException("作者 '" + newFirstName + " " + newLastName + "' 已存在。");
             }
-
-            Author author = new Author();
-            author.setFirstName(authorDTO.getFirstName());
-            author.setLastName(authorDTO.getLastName());
-            author.setBio(authorDTO.getBio());
-
-            author = authorDAO.addAuthor(author);
-
-            return new AuthorDTO(author.getAuthorId(), author.getFirstName(), author.getLastName(), author.getBio(), author.getCreatedAt().toString(), author.getUpdatedAt().toString());
         } catch (Exception e) {
             logger.error("创建作者时，检查作者名称是否存在时发生意外错误: {}", e.getMessage(), e);
             throw new OperationFailedException("创建作者时，检查作者名称是否存在时发生意外错误: " + e.getMessage());
         }
+
+        // 2. 创建新作者
+        Author newAuthor = new Author();
+        newAuthor.setFirstName(newFirstName);
+        newAuthor.setLastName(newLastName);
+        newAuthor.setBio(newBio);
+
+        newAuthor = authorDAO.addAuthor(newAuthor);
+
+        Author savedAuthor;
+        try {
+            savedAuthor = authorDAO.addAuthor(newAuthor);
+            if (savedAuthor == null || savedAuthor.getAuthorId() == null) {
+                throw new OperationFailedException("创建作者后未能获取有效的作者信息。");
+            }
+        } catch (Exception e) {
+            logger.error("创建作者 '{} {}' 时发生数据库错误。", newFirstName, newLastName, e);
+            throw new OperationFailedException("创建作者时发生数据库错误。", e);
+        }
+
+        return convertToAuthorDTO(savedAuthor);
     }
 
     @Override
@@ -144,89 +157,119 @@ public class AuthorServiceImpl implements AuthorService {
 
         // 1. 校验数据
         if (authorDTO == null) {
-            logger.error("更新作者时失败，authorDTO参数不能为空");
-            throw new ValidationException("更新作者时，AuthorDTO参数不能为空");
+            throw new ValidationException("更新作者的请求数据不能为空。");
         }
 
-        if (authorDTO.getFirstName() == null || authorDTO.getLastName() == null || authorDTO.getBio() == null || authorDTO.getCreatedAt() == null || authorDTO.getUpdatedAt() == null) {
-            logger.error("更新作者时失败，dto必要参数为空");
+        if (authorDTO.getFirstName() == null || authorDTO.getLastName() == null) {
             throw new ValidationException("更新作者时，dto必要参数为空");
         }
 
         String newFirstName = authorDTO.getFirstName().trim();
         String newLastName = authorDTO.getLastName().trim();
-        String newBio = authorDTO.getBio().trim();
-        String newCreatedAt = authorDTO.getCreatedAt().trim();
-        String newUpdatedAt = authorDTO.getUpdatedAt().trim();
+        String newBio = null;
+        if (authorDTO.getBio() != null) {
+            newBio = authorDTO.getBio().trim();
+        }
 
-        if (newFirstName.isEmpty() || newLastName.isEmpty() || newBio.isEmpty() || newCreatedAt.isEmpty() || newUpdatedAt.isEmpty()) {
-            logger.error("更新作者时失败，dto必要参数为空");
+        if (newFirstName.isEmpty() || newLastName.isEmpty()) {
             throw new ValidationException("更新作者时，dto必要参数为空");
         }
 
         // 2. 检查作者是否存在
-        Author author;
+        Author authorToUpdate;
         try {
-
-            if (authorDAO.existsByNameIgnoreCase(newFirstName, newLastName)) {
-                logger.error("更新作者ID {} 时，检查作者名称 '{}' 存在时发生错误。", authorId, newFirstName + " " + newLastName);
-                throw new DuplicateResourceException("作者已存在: " + newFirstName + " " + newLastName);
-            }
-
-            author = authorDAO.findAuthorById(authorId);
-
+            authorToUpdate = authorDAO.findAuthorById(authorId);
         } catch (Exception e) {
-            logger.error("更新作者时，检查作者名称是否存在时发生意外错误: {}", e.getMessage(), e);
-            throw new OperationFailedException("更新作者时，检查作者名称是否存在时发生意外错误: " + e.getMessage());
+            logger.error("更新作者ID {} 时查找失败。", authorId, e);
+            throw new OperationFailedException("查找待更新作者时发生错误。", e);
         }
 
-        if (author == null) {
-            logger.error("更新作者时失败，未找到作者信息，authorId: {}", authorId);
-            throw new ResourceNotFoundException("未找到该作者");
+        if (authorToUpdate == null) {
+            throw new ResourceNotFoundException("未找到ID为 " + authorId + " 的作者，无法更新。");
         }
+
+        // 3. 若修改名字
+        boolean nameHasChanged = !newFirstName.equalsIgnoreCase(authorToUpdate.getFirstName()) ||
+                !newLastName.equalsIgnoreCase(authorToUpdate.getLastName());
+
+        if (nameHasChanged) {
+            try {
+                // 检查新的firstName和lastName组合是否已被其他作者使用
+                if (authorDAO.existsByNameIgnoreCase(newFirstName, newLastName)) {
+                    logger.warn("更新作者ID {} 失败：姓名 '{} {}' 已被的其他作者使用。",
+                            authorId, newFirstName, newLastName);
+                    throw new DuplicateResourceException("姓名组合 '" + newFirstName + " " + newLastName + "' 已被其他作者使用。");
+                }
+            } catch (Exception e) {
+                logger.error("更新作者ID {} 时检查名称唯一性失败。", authorId, e);
+                throw new OperationFailedException("检查作者名称唯一性时发生错误。", e);
+            }
+            authorToUpdate.setFirstName(newFirstName);
+            authorToUpdate.setLastName(newLastName);
+        }
+
+
+
 
         // 3. 更新作者信息
-        author.setFirstName(newFirstName);
-        author.setLastName(newLastName);
-        author.setBio(newBio);
-        author.setCreatedAt(Timestamp.valueOf(newCreatedAt));
-        author.setUpdatedAt(Timestamp.valueOf(newUpdatedAt));
-
-        try {
-            author = authorDAO.updateAuthor(author);
-        } catch (Exception e) {
-            logger.error("更新作者时，更新作者信息时发生意外错误: {}", e.getMessage(), e);
-            throw new OperationFailedException("更新作者时，更新作者信息时发生意外错误: " + e.getMessage());
+        authorToUpdate.setFirstName(newFirstName);
+        authorToUpdate.setLastName(newLastName);
+        if (newBio != null && !newBio.isEmpty()) {
+            authorToUpdate.setBio(newBio);
         }
 
-        return new AuthorDTO(author.getAuthorId(), author.getFirstName(), author.getLastName(), author.getBio(), author.getCreatedAt().toString(), author.getUpdatedAt().toString());
+        Author updatedAuthor;
+        try {
+            updatedAuthor = authorDAO.updateAuthor(authorToUpdate);
+            if (updatedAuthor == null) {
+                throw new OperationFailedException("更新作者后未能获取有效的作者信息。");
+            }
+        } catch (Exception e) {
+            logger.error("更新作者ID {} 到数据库时失败。", authorId, e);
+            throw new OperationFailedException("更新作者信息到数据库时发生错误。", e);
+        }
+
+        return convertToAuthorDTO(updatedAuthor);
     }
 
     @Override
     public void deleteAuthor(int authorId)
             throws ResourceNotFoundException, OperationForbiddenException, OperationFailedException {
         logger.info("尝试删除作者，ID: {}", authorId);
-
-        // 1. 检查作者是否存在
         Author authorToDelete;
         try {
             authorToDelete = authorDAO.findAuthorById(authorId);
         } catch (Exception e) {
-            logger.error("删除作者ID {} 时，查找作者失败。", authorId, e);
+            logger.error("删除作者ID {} 时查找失败。", authorId, e);
             throw new OperationFailedException("查找待删除作者时发生错误。", e);
         }
 
         if (authorToDelete == null) {
-            logger.warn("删除作者失败：未找到ID为 {} 的作者。", authorId);
             throw new ResourceNotFoundException("未找到ID为 " + authorId + " 的作者，无法删除。");
         }
 
+        long bookCount;
         try {
-            boolean deleted = authorDAO.deleteAuthor(authorId);
-            if (!deleted) {
-                logger.warn("删除出版社ID {} 操作在DAO层未成功执行（可能已被删除或发生未知问题）。", authorId);
-                throw new OperationFailedException("删除出版社ID " + authorId + " 操作未成功完成。");
+            // 依赖BookDAO来检查作者是否有关联的书籍
+            bookCount = bookDAO.countBooksByAuthorId(authorId);
+        } catch (Exception e) {
+            logger.error("删除作者ID {} 时检查关联书籍失败。", authorId, e);
+            throw new OperationFailedException("检查作者关联书籍时发生错误。", e);
+        }
+
+        if (bookCount > 0) {
+            logger.warn("删除作者ID {} 失败：该作者尚著有 {} 本书籍。", authorId, bookCount);
+            throw new OperationForbiddenException("无法删除该作者，他/她尚著有 " + bookCount + " 本书籍。");
+        }
+
+        try {
+            if (!authorDAO.deleteAuthor(authorId)) {
+                logger.warn("删除作者ID {} 操作在DAO层未成功执行。", authorId);
+                // 如果DAO的deleteAuthor返回false，且前面已确认作者存在且无关联书籍，
+                // 这可能指示一个不期望的状态或DAO内部问题。
+                throw new OperationFailedException("删除作者ID " + authorId + " 操作未成功完成。");
             }
+            logger.info("作者ID {} 已成功删除。", authorId);
         } catch (Exception e) {
             logger.error("删除作者ID {} 时发生数据库错误。", authorId, e);
             throw new OperationFailedException("删除作者时发生数据库错误。", e);
