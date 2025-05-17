@@ -135,8 +135,6 @@ public class AuthorServiceImpl implements AuthorService {
         newAuthor.setLastName(newLastName);
         newAuthor.setBio(newBio);
 
-        newAuthor = authorDAO.addAuthor(newAuthor);
-
         Author savedAuthor;
         try {
             savedAuthor = authorDAO.addAuthor(newAuthor);
