@@ -1,0 +1,32 @@
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/library_system?useSSL=false&amp;serverTimezone=UTC</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password">123456ABab</property>
+
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
+
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.format_sql">true</property>
+
+        <!-- 自动建表策略（开发阶段可设为 update） -->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+
+        <mapping class="com.ILoveU.model.User"/>
+        <mapping class="com.ILoveU.model.Book"/>
+        <mapping class="com.ILoveU.model.Author"/>
+        <mapping class="com.ILoveU.model.Press"/>
+        <mapping class="com.ILoveU.model.Tag"/>
+        <mapping class="com.ILoveU.model.Loan"/>
+
+        <!--  中间表，目前需求来看暂不需要这两个实体类-->
+        <!-- <mapping class="com.ILoveU.model.BookAuthor"/> -->
+        <!-- <mapping class="com.ILoveU.model.BookTag"/> -->
+
+    </session-factory>
+</hibernate-configuration>

@@ -3,7 +3,7 @@
  */
 
 // API基础URL
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:8080/LibrarySystem_war_exploded/api';
 
 /**
  * 发送HTTP请求的通用函数
@@ -26,14 +26,24 @@ async function fetchAPI(url, method = 'GET', data = null) {
         }
 
         const response = await fetch(`${API_BASE_URL}${url}`, options);
-        
-        // 检查响应状态
+
+        // 先获取文本内容
+        const text = await response.text();
+
+        // 错误时尝试解析错误信息
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+                errorData = text ? JSON.parse(text) : {};
+            } catch {
+                errorData = { message: text || '请求失败' };
+            }
             throw new Error(errorData.message || '请求失败');
         }
 
-        return await response.json();
+        // 正常时如果有内容就解析，没有内容就返回空对象
+        if (!text) return {};
+        return JSON.parse(text);
     } catch (error) {
         console.error('API请求错误:', error);
         throw error;

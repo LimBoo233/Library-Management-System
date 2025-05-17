@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="LibrarySystem:Web2 exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/LibrarySystem_Web2_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="LibrarySystem/web/Web2" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="LibrarySystem" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
