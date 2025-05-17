@@ -1,6 +1,5 @@
 package com.ILoveU.dao;
 
-import com.ILoveU.exception.OperationFailedException;
 import com.ILoveU.model.Tag;
 
 import java.util.List;
