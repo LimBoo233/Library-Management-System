@@ -56,7 +56,7 @@ public interface LoanDAO {
     long countActiveLoansByBookId(int bookId);
 
     /**
-     * (可选API功能) 分页查询指定用户的借阅记录列表。
+     * 页查询指定用户的借阅记录列表。
      *
      * @param userId   用户的ID。
      * @param page     请求的页码。
@@ -67,7 +67,7 @@ public interface LoanDAO {
     List<Loan> findLoansByUserId(int userId, int page, int pageSize);
 
     /**
-     * (可选API功能) 统计指定用户的借阅记录总数。
+     * 统计指定用户的借阅记录总数。
      *
      * @param userId 用户的ID。
      * @return 指定用户的借阅记录总数。如果查询过程中发生数据库错误，则返回 {@code 0L}。
@@ -75,7 +75,7 @@ public interface LoanDAO {
     long countLoansByUserId(int userId);
 
     /**
-     * (可选API功能或管理员功能) 分页查询所有借阅记录列表。
+     * 分页查询所有借阅记录列表。
      *
      * @param page     请求的页码。
      * @param pageSize 每页期望返回的记录数。
@@ -85,7 +85,7 @@ public interface LoanDAO {
     List<Loan> findAllLoans(int page, int pageSize);
 
     /**
-     * (可选API功能或管理员功能) 统计所有借阅记录的总数。
+     * 统计所有借阅记录的总数。
      *
      * @return 所有借阅记录的总数。如果查询过程中发生数据库错误，则返回 {@code 0L}。
      */
