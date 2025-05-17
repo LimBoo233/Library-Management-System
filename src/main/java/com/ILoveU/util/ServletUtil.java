@@ -102,4 +102,36 @@ public class ServletUtil {
     public static void sendErrorResponse(HttpServletResponse response, HttpServletRequest request, int statusCode, String errorShortDescription, String message, Logger logger) throws IOException {
         ServletUtil.sendErrorResponse(response, request, statusCode, errorShortDescription, message, null, logger);
     }
+
+    /**
+     * 发送成功的JSON响应。
+     *
+     * @param response HttpServletResponse 对象
+     * @param statusCode HTTP状态码 (例如 200 OK, 201 Created)
+     * @param data 要序列化为JSON并发送的数据对象。如果为null且状态码不是204, 则发送空JSON对象。
+     * 对于204 No Content, data应为null，且不发送响应体。
+     * @throws IOException 如果写入响应时发生I/O错误
+     */
+    public static void sendSuccessResponse(HttpServletResponse response, int statusCode, Object data) throws IOException {
+        // ContentType 和 CharacterEncoding 应该在调用此方法前，在Servlet中统一设置
+        // 例如在Servlet的doXxx方法开头:
+        // response.setContentType("application/json");
+        // response.setCharacterEncoding("UTF-8");
+        response.setStatus(statusCode);
+
+        // 对于 204 No Content，不应有响应体
+        if (statusCode == HttpServletResponse.SC_NO_CONTENT) {
+            return; // 直接返回，不写入任何内容
+        }
+
+        PrintWriter out = response.getWriter();
+        if (data != null) {
+            out.print(toJson(data));
+        } else {
+            // 如果data为null但不是204，可以根据API规范决定是发送空JSON对象{}还是空字符串
+            // 通常发送空JSON对象更符合JSON API的习惯
+            out.print("{}");
+        }
+        out.flush();
+    }
 }
