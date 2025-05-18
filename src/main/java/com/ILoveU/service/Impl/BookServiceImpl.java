@@ -360,7 +360,11 @@ public class BookServiceImpl implements BookService {
             if (newAuthors.size() != uniqueAuthorIds.size()) {
                 throw new ResourceNotFoundException("更新图书时，一个或多个提供的作者ID无效。");
             }
-            newAuthors.forEach(existingBook::addAuthor); // 使用Book实体中的辅助方法
+
+            for (Author author : newAuthors) {
+                existingBook.getAuthors().add(author);
+            }
+
         }
 
         // 更新标签关联 (与作者类似，先清除后添加)
@@ -377,7 +381,11 @@ public class BookServiceImpl implements BookService {
             if (newTags.size() != uniqueTagIds.size()) {
                 throw new ResourceNotFoundException("更新图书时，一个或多个提供的标签ID无效。");
             }
-            newTags.forEach(existingBook::addTag); // 使用Book实体中的辅助方法
+
+            for (Tag tag : newTags) {
+                existingBook.getTags().add(tag);
+            }
+
         }
 
         // 持久化更改 (updatedAt将由Hibernate自动更新)

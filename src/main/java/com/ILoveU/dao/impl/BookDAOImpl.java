@@ -89,14 +89,68 @@ public class BookDAOImpl implements BookDAO {
         return null;
     }
 
+    /**
+     * 更新数据库中已存在的图书信息。
+     * 在合并Book对象之前，先将其关联的游离态Press, Author, Tag对象合并到当前Session。
+     *
+     * @param book 包含更新后信息的 {@link Book} 对象。其ID应指向一个已存在的图书。
+     * @return 更新成功后的受Hibernate Session管理的 {@link Book} 对象；如果更新失败则返回null。
+     */
     @Override
     public Book updateBook(Book book) {
         Transaction transaction = null;
-        Book managedBook = null;
-
+        if (book == null || book.getBookId() == null) {
+            logger.warn("尝试更新的Book对象或其ID为null。");
+            return null;
+        }
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            managedBook = (Book) session.merge(book);
+
+            // 1. 先处理关联的游离对象，将它们merge到当前session
+            //    确保这些关联对象已经是当前session管理的持久态对象
+            if (book.getPress() != null && book.getPress().getPressId() != null) {
+                Press managedPress = (Press) session.merge(book.getPress());
+                book.setPress(managedPress);
+            } else if (book.getPress() != null) {
+                logger.warn("更新图书时，关联的Press对象没有ID，可能无法正确merge。");
+                // 如果允许通过更新Book来创建新Press，则Book与Press的关联需要CascadeType.PERSIST
+                // 且Press对象不应有ID。但通常更新Book是关联已存在的Press。A
+                // 此处我们假设如果Press对象存在，它应该有ID才能被merge。
+                // 如果book.getPress()是null，则表示要解除与出版社的关联（如果外键允许为null）
+            }
+
+
+            if (book.getAuthors() != null) { // 即使为空集合，也设置，以便Hibernate管理关系（可能删除所有旧关联）
+                Set<Author> managedAuthors = new HashSet<>();
+                for (Author detachedAuthor : book.getAuthors()) {
+                    if (detachedAuthor != null && detachedAuthor.getAuthorId() != null) {
+                        managedAuthors.add((Author) session.merge(detachedAuthor));
+                    } else if (detachedAuthor != null){
+                        logger.warn("更新图书时，关联的某个Author对象没有ID，将不会被merge。");
+                        // managedAuthors.add(detachedAuthor); // 如果允许级联PERSIST新作者
+                    }
+                }
+                book.setAuthors(managedAuthors); // 设置为包含受管对象的集合
+            }
+
+            if (book.getTags() != null) { // 即使为空集合，也设置
+                Set<Tag> managedTags = new HashSet<>();
+                for (Tag detachedTag : book.getTags()) {
+                    if (detachedTag != null && detachedTag.getTagId() != null) {
+                        managedTags.add((Tag) session.merge(detachedTag));
+                    } else if (detachedTag != null){
+                        logger.warn("更新图书时，关联的某个Tag对象没有ID，将不会被merge。");
+                        // managedTags.add(detachedTag); // 如果允许级联PERSIST新标签
+                    }
+                }
+                book.setTags(managedTags);
+            }
+
+            // 2. 现在merge Book对象本身
+            // 由于book的关联对象都已经是当前session管理的持久态了，
+            // merge book会将其基本属性更新，并根据其authors和tags集合的状态更新中间表。
+            Book managedBook = (Book) session.merge(book);
+
             transaction.commit();
             logger.info("图书 ID: {} 已成功更新。", managedBook.getBookId());
             return managedBook;
@@ -108,6 +162,27 @@ public class BookDAOImpl implements BookDAO {
         }
         return null;
     }
+
+
+    // @Override
+    // public Book updateBook(Book book) {
+    //     Transaction transaction = null;
+    //     Book managedBook = null;
+    //
+    //     try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+    //         transaction = session.beginTransaction();
+    //         managedBook = (Book) session.merge(book);
+    //         transaction.commit();
+    //         logger.info("图书 ID: {} 已成功更新。", managedBook.getBookId());
+    //         return managedBook;
+    //     } catch (Exception e) {
+    //         if (transaction != null && transaction.isActive()) {
+    //             transaction.rollback();
+    //         }
+    //         logger.error("更新图书 ID: {} 时发生错误: {}", book.getBookId(), e.getMessage(), e);
+    //     }
+    //     return null;
+    // }
 
     @Override
     public boolean deleteBook(int bookId) {
