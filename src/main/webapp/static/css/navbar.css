@@ -1,0 +1,66 @@
+/* 导航栏容器 */
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 品牌名称样式 */
+.navbar-brand h1 {
+    font-size: 1.5rem;
+    color: #007bff;
+    margin: 0;
+}
+
+/* 导航菜单容器 */
+.navbar-menu {
+    display: flex;
+    gap: 1rem;
+}
+
+/* 导航项样式 */
+.navbar-item {
+    color: #333;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.navbar-item:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
+}
+
+/* 导航栏右侧区域 */
+.navbar-end {
+    display: flex;
+    gap: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        padding: 0.5rem;
+    }
+
+    .navbar-brand {
+        margin-bottom: 1rem;
+    }
+
+    .navbar-menu {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .navbar-end {
+        margin-top: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+} 
