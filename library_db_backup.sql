@@ -160,6 +160,39 @@ CREATE TABLE `loans` (
                              ON UPDATE CASCADE   -- 如果图书ID更新了（虽然主键通常不更新），借阅记录中的book_id也跟着更新
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='图书借阅记录表';
 
+
+DELIMITER ;;
+CREATE TRIGGER `tr_loans_before_insert` BEFORE INSERT ON `loans` FOR EACH ROW BEGIN
+    -- 检查库存 (确保 NEW.book_id 不为 NULL)
+    IF NEW.book_id IS NOT NULL AND (SELECT num_copies_available FROM books WHERE book_id = NEW.book_id) <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = '图书无可用库存，无法借出';
+END IF;
+-- 减少可用库存 (确保 NEW.book_id 不为 NULL)
+IF NEW.book_id IS NOT NULL THEN
+UPDATE books SET num_copies_available = num_copies_available - 1
+WHERE book_id = NEW.book_id;
+END IF;
+END ;;
+DELIMITER ;
+
+DELIMITER ;;
+CREATE TRIGGER `tr_loans_before_update` BEFORE UPDATE ON `loans` FOR EACH ROW BEGIN
+    -- 只在 return_date 从 NULL 变为 非NULL 时（即还书时）增加库存
+    IF NEW.return_date IS NOT NULL AND OLD.return_date IS NULL THEN
+        -- 检查库存是否需要增加 (确保 NEW.book_id 不为 NULL)
+        IF NEW.book_id IS NOT NULL AND (SELECT num_copies_available FROM books WHERE book_id = NEW.book_id) <
+           (SELECT num_copies_total FROM books WHERE book_id = NEW.book_id) THEN
+
+            -- 增加可用库存
+    UPDATE books
+    SET num_copies_available = num_copies_available + 1
+    WHERE book_id = NEW.book_id;
+END IF;
+END IF;
+END ;;
+DELIMITER ;
+
 -- 关于触发器的重要提示：
 -- 如果你之前定义了在 loans 表 INSERT 或 UPDATE 时操作 books 表库存的触发器，
 -- 并且这些触发器依赖于 NEW.book_id 或 OLD.book_id，
