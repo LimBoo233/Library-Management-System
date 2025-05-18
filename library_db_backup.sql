@@ -257,7 +257,7 @@ CREATE TABLE `users` (
   `user_id` int NOT NULL AUTO_INCREMENT,
   `account` varchar(255) NOT NULL COMMENT '登录账号',
   `password` varchar(255) NOT NULL COMMENT '密码（加密存储）',
-  `username` varchar(100) NOT NULL COMMENT '显示名称',
+  `name` varchar(100) NOT NULL COMMENT '显示名称',
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `account` (`account`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
