@@ -1,7 +1,7 @@
 package com.ILoveU.service.Impl;
 
 import com.ILoveU.dao.UserDAO;
-import com.ILoveU.dao.impl.UserDaoImpl;
+import com.ILoveU.dao.impl.UserDAOImpl;
 import com.ILoveU.dto.UserDTO;
 import com.ILoveU.exception.AuthenticationException;
 import com.ILoveU.exception.DuplicateResourceException;
@@ -22,7 +22,7 @@ public class UserServiceImpl implements UserService {
 
     public UserServiceImpl() {
         // 或者通过构造函数注入
-        this.userDAO = new UserDaoImpl();
+        this.userDAO = new UserDAOImpl();
     }
 
     @Override

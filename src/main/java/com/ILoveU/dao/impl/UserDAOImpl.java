@@ -9,8 +9,8 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-public class UserDaoImpl implements UserDAO {
-    private static final Logger logger = LoggerFactory.getLogger(UserDaoImpl.class);
+public class UserDAOImpl implements UserDAO {
+    private static final Logger logger = LoggerFactory.getLogger(UserDAOImpl.class);
     
     @Override
     public User addUser(User user) {

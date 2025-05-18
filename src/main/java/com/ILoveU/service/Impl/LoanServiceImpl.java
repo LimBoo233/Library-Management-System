@@ -5,7 +5,7 @@ import com.ILoveU.dao.LoanDAO;
 import com.ILoveU.dao.UserDAO;
 import com.ILoveU.dao.impl.BookDAOImpl;
 import com.ILoveU.dao.impl.LoanDAOImpl;
-import com.ILoveU.dao.impl.UserDaoImpl;
+import com.ILoveU.dao.impl.UserDAOImpl;
 import com.ILoveU.dto.ApiErrorResponse;
 import com.ILoveU.dto.LoanDTO;
 import com.ILoveU.dto.PageDTO;
@@ -38,7 +38,7 @@ public class LoanServiceImpl implements LoanService {
     private static final int DEFAULT_LOAN_DURATION_DAYS = 14;
 
     public LoanServiceImpl() {
-        this(new LoanDAOImpl(), new UserDaoImpl(), new BookDAOImpl());
+        this(new LoanDAOImpl(), new UserDAOImpl(), new BookDAOImpl());
     }
 
     // 通过构造函数注入DAO实例

@@ -1,10 +1,10 @@
 import com.ILoveU.dao.UserDAO;
-import com.ILoveU.dao.impl.UserDaoImpl;
+import com.ILoveU.dao.impl.UserDAOImpl;
 import com.ILoveU.model.User;
 
 public class UserDaoTest {
     public static void main(String[] args) {
-        UserDAO userDAO = new UserDaoImpl();
+        UserDAO userDAO = new UserDAOImpl();
         boolean isAccountExists = userDAO.isAccountExists("rosmontis123");
         System.out.println(isAccountExists ? "Account Exists XD" : "Account Not Exists TxT ");
 
