@@ -90,7 +90,8 @@ public class Book {
      * 图书所属的出版社。
      * 这是一个多对一的关系：多本书可以属于一个出版社。
      */
-    @ManyToOne(fetch = FetchType.LAZY) // 推荐懒加载
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "press_id", nullable = false) // 外键列在books表中
     private Press press;
 
@@ -98,7 +99,7 @@ public class Book {
      * 图书的作者集合。
      * 这是一个多对多关系，通过中间表 book_authors 连接。
      */
-    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.MERGE }) // 添加级联
+    @ManyToMany(fetch =  FetchType.EAGER, cascade = { CascadeType.MERGE }) // 添加级联
     @JoinTable(
             name = "book_authors", // 中间连接表的名称
             joinColumns = @JoinColumn(name = "book_id"), // 中间表中参照当前实体(Book)主键的外键列
@@ -110,7 +111,7 @@ public class Book {
      * 图书的标签集合。
      * 这是一个多对多关系，通过中间表 book_tags 连接。
      */
-    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.MERGE })
+    @ManyToMany(fetch =  FetchType.EAGER, cascade = { CascadeType.MERGE })
     @JoinTable(
             name = "book_tags",
             joinColumns = @JoinColumn(name = "book_id"),
