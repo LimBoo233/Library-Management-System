@@ -9,8 +9,10 @@ import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class AuthorDAOImpl implements AuthorDAO {
 
@@ -192,5 +194,27 @@ public class AuthorDAOImpl implements AuthorDAO {
         }
 
         return 0L;
+    }
+
+    @Override
+    public List<Author> findAuthorsByIds(Set<Integer> authorIds) {
+        if (authorIds == null || authorIds.isEmpty()) {
+            logger.debug("findAuthorsByIds: 提供的作者ID集合为空或null。");
+            return Collections.emptyList();
+        }
+
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String hql = "FROM Author a WHERE a.authorId IN (:ids)";
+            Query<Author> query = session.createQuery(hql, Author.class);
+            // 使用 setParameterList 来设置集合类型的参数
+            query.setParameterList("ids", authorIds);
+
+            List<Author> authors = query.list();
+            logger.debug("通过ID列表 {} 查询到 {} 位作者。", authorIds, authors.size());
+            return authors;
+        } catch (Exception e) {
+            logger.error("根据ID列表查询作者时发生错误: {}", e.getMessage(), e);
+        }
+        return Collections.emptyList();
     }
 }

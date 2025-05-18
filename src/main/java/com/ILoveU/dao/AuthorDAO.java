@@ -3,6 +3,7 @@ package com.ILoveU.dao;
 import com.ILoveU.model.Author;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * AuthorDAO (Data Access Object) 接口定义了与作者（Author）实体相关的数据库操作。
@@ -100,4 +101,13 @@ public interface AuthorDAO {
      * @return 符合条件的作者总数。
      */
     long countAuthorsByNameKeyword(String nameKeyword);
+
+    /**
+     * 根据一组作者ID查找对应的作者对象列表。
+     *
+     * @param authorIds 要查找的作者ID集合。
+     * @return 包含匹配的作者对象的列表。
+     * 如果没有找到任何匹配项或发生错误，应返回一个空列表，而不是null。
+     */
+    List<Author> findAuthorsByIds(Set<Integer> authorIds);
 }

@@ -120,7 +120,6 @@ public interface BookDAO {
      * @throws OperationFailedException 如果查询过程中发生数据库错误。
      */
     Book findBookByIsbn(String isbn) throws OperationFailedException;
-    // 备选签名: Optional<Book> findBookByIsbn(String isbn) throws OperationFailedException;
 
     /**
      * 检查指定的ISBN是否已存在于数据库中。
