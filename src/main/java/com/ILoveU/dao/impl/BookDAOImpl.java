@@ -2,8 +2,7 @@ package com.ILoveU.dao.impl;
 
 import com.ILoveU.dao.BookDAO;
 import com.ILoveU.exception.OperationFailedException;
-import com.ILoveU.model.Book;
-import com.ILoveU.model.Loan;
+import com.ILoveU.model.*;
 import com.ILoveU.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -25,8 +24,43 @@ public class BookDAOImpl implements BookDAO {
         }
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            // Persists the Book entity and cascades to authors/tags if configured
+
+            // 1. 先处理关联的游离对象，将它们merge到当前session
+            Press managedPress = null;
+            if (book.getPress() != null && book.getPress().getPressId() != null) {
+                managedPress = (Press) session.merge(book.getPress());
+                book.setPress(managedPress); // 将book关联到受当前session管理的对象
+            }
+
+            Set<Author> managedAuthors = new HashSet<>();
+            if (book.getAuthors() != null) {
+                for (Author detachedAuthor : book.getAuthors()) {
+                    if (detachedAuthor != null && detachedAuthor.getAuthorId() != null) {
+                        managedAuthors.add((Author) session.merge(detachedAuthor));
+                    } else if (detachedAuthor != null) {
+                        // 如果Author是全新的（没有ID），且Book.authors级联包含PERSIST，则可以直接添加
+                        // 但我们测试代码中是从数据库加载的，所以它们有ID，是游离态
+                        logger.warn("Book关联的某个Author对象没有ID，将不会被merge。");
+                    }
+                }
+                book.setAuthors(managedAuthors); // 将book关联到受当前session管理的作者集合
+            }
+
+            Set<Tag> managedTags = new HashSet<>();
+            if (book.getTags() != null) {
+                for (Tag detachedTag : book.getTags()) {
+                    if (detachedTag != null && detachedTag.getTagId() != null) {
+                        managedTags.add((Tag) session.merge(detachedTag));
+                    } else if (detachedTag != null) {
+                        logger.warn("Book关联的某个Tag对象没有ID，将不会被merge。");
+                    }
+                }
+                book.setTags(managedTags); // 将book关联到受当前session管理的标签集合
+            }
+
+            // 2. 现在保存Book对象，它关联的都是当前session管理的对象了
             session.save(book);
+
             transaction.commit();
             logger.info("图书 '{}' (ID: {}) 已成功添加到数据库。", book.getTitle(), book.getBookId());
             return book;
@@ -34,7 +68,7 @@ public class BookDAOImpl implements BookDAO {
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();
             }
-            logger.error("添加图书 '{}' 时发生错误: {}", book.getTitle(), e.getMessage(), e);
+            logger.error("添加图书 '{}' 时发生错误: {}", book.getTitle() != null ? book.getTitle() : "N/A", e.getMessage(), e);
         }
         return null;
     }

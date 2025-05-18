@@ -190,9 +190,10 @@ public class BookServiceImpl implements BookService {
         }
 
         // 5. 处理作者关联
+        List<Author> foundAuthors = new ArrayList<>();
         if (createRequest.getAuthorIds() != null && !createRequest.getAuthorIds().isEmpty()) {
             Set<Integer> uniqueAuthorIds = new HashSet<>(createRequest.getAuthorIds()); // 使用Set去重
-            List<Author> foundAuthors;
+
             try {
                 foundAuthors = authorDAO.findAuthorsByIds(uniqueAuthorIds);
             } catch (Exception e) {
@@ -204,13 +205,15 @@ public class BookServiceImpl implements BookService {
                 // 可以更精确地指出哪些ID未找到
                 throw new ResourceNotFoundException("一个或多个提供的作者ID无效。");
             }
-            foundAuthors.forEach(newBook::addAuthor); // 使用Book实体中的辅助方法建立关联
+
+         
         }
 
         // 6. 处理标签关联
+        List<Tag> foundTags = new ArrayList<>();
         if (createRequest.getTagIds() != null && !createRequest.getTagIds().isEmpty()) {
             Set<Integer> uniqueTagIds = new HashSet<>(createRequest.getTagIds());
-            List<Tag> foundTags;
+
             try {
                 foundTags = tagDAO.findTagsByIds(uniqueTagIds); // 假设TagDAO有此方法
             } catch (Exception e) {
@@ -220,14 +223,23 @@ public class BookServiceImpl implements BookService {
             if (foundTags.size() != uniqueTagIds.size()) {
                 throw new ResourceNotFoundException("一个或多个提供的标签ID无效。");
             }
-            foundTags.forEach(newBook::addTag); // 使用Book实体中的辅助方法建立关联
+
+         
+        }
+
+        for (Author author : foundAuthors) {
+            newBook.getAuthors().add(author);
+        }
+
+        for (Tag tag : foundTags) {
+            newBook.getTags().add(tag);
         }
 
         // 7. 保存Book实体
         Book savedBook;
         try {
             savedBook = bookDAO.addBook(newBook);
-            if (savedBook == null || savedBook.getBookId() == null) { // 确保保存成功并返回了ID
+            if (savedBook == null || savedBook.getBookId() == null) {
                 throw new OperationFailedException("创建图书后未能获取有效的图书信息。");
             }
         } catch (Exception e) {

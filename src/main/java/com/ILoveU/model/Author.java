@@ -33,6 +33,7 @@ public class Author {
     private String lastName;
 
     @Lob
+    @Basic(fetch = FetchType.EAGER)
     @Column(name = "bio")
     private String bio;
 
