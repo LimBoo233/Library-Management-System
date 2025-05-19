@@ -109,15 +109,33 @@ body::before {
 .table th,
 .table td {
     padding: 0.75rem;
-    vertical-align: top;
+    vertical-align: middle;
     border-top: 1px solid #dee2e6;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 .table thead th {
-    vertical-align: bottom;
+    vertical-align: middle;
     border-bottom: 2px solid #dee2e6;
-    background-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.8);
+    font-weight: 600;
+}
+
+/* 表格行悬停效果 */
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table tbody tr:hover td {
+    font-size: 1.05em;
+    color: #007bff;
 }
 
 /* 分页样式 */
