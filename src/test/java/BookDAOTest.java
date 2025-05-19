@@ -36,7 +36,6 @@ public class BookDAOTest {
             Book newBook = new Book();
             newBook.setIsbn("2998887776635"); // 使用一个唯一的ISBN进行测试
             newBook.setTitle("我的第二本测试图书");
-            newBook.setPublishYear(2025);
             newBook.setNumCopiesTotal(20);
             newBook.setNumCopiesAvailable(18);
 

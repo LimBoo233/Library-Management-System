@@ -50,13 +50,6 @@ public class Book {
     private String isbn;
 
     /**
-     * 图书的出版年份。
-     * 对应数据库中的 publication_year 列 (YEAR类型)。
-     */
-    @Column(name = "publish_year") // 移除了length属性，YEAR类型由数据库定义
-    private Integer publishYear; // ERD图是 publication_year
-
-    /**
      * 图书的总副本数量。
      * 对应数据库中的 num_copies_total 列，不能为空。
      */

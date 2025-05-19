@@ -52,7 +52,6 @@ public class BookServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String pathInfo = request.getPathInfo();
-
         try {
             // 情况1: GET /api/books (获取图书列表，支持分页、搜索、按出版社/标签过滤)
             if (pathInfo == null || pathInfo.equals("/")) {
@@ -148,6 +147,7 @@ public class BookServlet extends HttpServlet {
 
             } catch (ValidationException e) {
                 logger.warn("Validation error in POST /api/books: {}", e.getMessage());
+                e.printStackTrace();
                 ServletUtil.sendErrorResponse(response, request, HttpServletResponse.SC_BAD_REQUEST, "Bad Request", e.getMessage(), e.getErrors(), logger);
             } catch (ResourceNotFoundException e) { // 例如，提供的pressId, authorId, tagId无效
                 logger.warn("Resource not found during POST /api/books: {}", e.getMessage());
