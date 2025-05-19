@@ -98,13 +98,13 @@ function renderLoansTable(loans, container) {
         <tbody>
             ${loans.map(loan => `
                 <tr>
-                    <td style="text-align: center;">${loan.id}</td>
-                    <td style="text-align: center;">${loan.userId}</td>
-                    <td style="text-align: center;">${loan.bookId}</td>
-                    <td style="text-align: center;">${loan.checkoutDate ? formatDate(loan.checkoutDate).split(' ')[0] : ''}</td>
-                    <td style="text-align: center;">${loan.dueDate ? formatDate(loan.dueDate).split(' ')[0] : ''}</td>
-                    <td style="text-align: center;">${loan.returnDate ? formatDate(loan.returnDate).split(' ')[0] : ''}</td>
-                    <td style="text-align: center;">${loan.isOverdue ? '是' : '否'}</td>
+                    <td>${loan.id}</td>
+                    <td>${loan.userId}</td>
+                    <td>${loan.bookId}</td>
+                    <td>${loan.checkoutDate ? formatDate(loan.checkoutDate).split(' ')[0] : ''}</td>
+                    <td>${loan.dueDate ? formatDate(loan.dueDate).split(' ')[0] : ''}</td>
+                    <td>${loan.returnDate ? formatDate(loan.returnDate).split(' ')[0] : ''}</td>
+                    <td>${loan.isOverdue ? '是' : '否'}</td>
                 </tr>
             `).join('')}
         </tbody>
