@@ -347,6 +347,7 @@ public class BookServiceImpl implements BookService {
         // 注意：这会移除所有现有作者，然后添加DTO中指定的作者。
         // 更高级的策略是比较新旧集合的差异，只做必要的增删。
         // 清除时也应使用辅助方法以维护双向关联（如果Author端有books集合）
+
         new HashSet<>(existingBook.getAuthors()).forEach(existingBook::removeAuthor); // 使用副本进行迭代和移除
         if (updateRequest.getAuthorIds() != null && !updateRequest.getAuthorIds().isEmpty()) {
             Set<Integer> uniqueAuthorIds = new HashSet<>(updateRequest.getAuthorIds());

@@ -163,27 +163,6 @@ public class BookDAOImpl implements BookDAO {
         return null;
     }
 
-
-    // @Override
-    // public Book updateBook(Book book) {
-    //     Transaction transaction = null;
-    //     Book managedBook = null;
-    //
-    //     try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-    //         transaction = session.beginTransaction();
-    //         managedBook = (Book) session.merge(book);
-    //         transaction.commit();
-    //         logger.info("图书 ID: {} 已成功更新。", managedBook.getBookId());
-    //         return managedBook;
-    //     } catch (Exception e) {
-    //         if (transaction != null && transaction.isActive()) {
-    //             transaction.rollback();
-    //         }
-    //         logger.error("更新图书 ID: {} 时发生错误: {}", book.getBookId(), e.getMessage(), e);
-    //     }
-    //     return null;
-    // }
-
     @Override
     public boolean deleteBook(int bookId) {
         Transaction transaction = null;

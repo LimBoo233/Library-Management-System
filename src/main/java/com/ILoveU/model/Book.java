@@ -117,14 +117,14 @@ public class Book {
     public void addAuthor(Author author) {
         if (author != null) {
             this.authors.add(author);
-            author.getBooksInternal().add(this); // 假设Author有getBooksInternal()
+            // author.getBooksInternal().add(this);
         }
     }
 
     public void removeAuthor(Author author) {
         if (author != null) {
             this.authors.remove(author);
-            author.getBooksInternal().remove(this);
+            // author.getBooksInternal().remove(this);
         }
     }
 
@@ -139,7 +139,7 @@ public class Book {
     public void removeTag(Tag tag) {
         if (tag != null) {
             this.tags.remove(tag);
-            tag.getBooksInternal().remove(this);
+            // tag.getBooksInternal().remove(this);
         }
     }
 
