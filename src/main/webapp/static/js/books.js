@@ -159,19 +159,17 @@ function renderBooksTable(books, container) {
         <tbody>
             ${books.map(book => `
                 <tr>
-                    <td style="text-align: center;">${book.id}</td>
-                    <td style="text-align: center;">${book.title}</td>
-                    <td style="text-align: center;">${book.isbn}</td>
-                    <td style="text-align: center;">${(book.authors||[]).map(a=>a.firstName + (a.lastName?(' ' + a.lastName):'')).join(', ')}</td>
-                    <td style="text-align: center;">${book.press ? book.press.name : ''}</td>
-                    <td style="text-align: center;">${(book.tags||[]).map(t=>t.name).join(', ')}</td>
-                    <td style="text-align: center;">${book.numCopiesAvailable}</td>
-                    <td style="text-align: center;">
-                        <div style="display: flex; justify-content: center; gap: 0.5rem;">
-                            <button class="btn btn-primary" onclick="showBookDetail(${book.id})">详情</button>
-                            <button class="btn btn-primary" onclick="showEditBookModal(${book.id})">编辑</button>
-                            <button class="btn btn-danger" onclick="deleteBook(${book.id})">删除</button>
-                        </div>
+                    <td>${book.id}</td>
+                    <td>${book.title}</td>
+                    <td>${book.isbn}</td>
+                    <td>${(book.authors||[]).map(a=>a.firstName + (a.lastName?(' ' + a.lastName):'')).join(', ')}</td>
+                    <td>${book.press ? book.press.name : ''}</td>
+                    <td>${(book.tags||[]).map(t=>t.name).join(', ')}</td>
+                    <td>${book.numCopiesAvailable}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="showBookDetail(${book.id})">详情</button>
+                        <button class="btn btn-primary" onclick="showEditBookModal(${book.id})">编辑</button>
+                        <button class="btn btn-danger" onclick="deleteBook(${book.id})">删除</button>
                     </td>
                 </tr>
             `).join('')}
