@@ -459,4 +459,18 @@ async function deleteBook(bookId) {
     } catch (error) {
         alert(error.message || '删除失败');
     }
-} 
+}
+
+(function(){
+    if(document.getElementById('corner-gif')) return;
+    const gifDiv = document.createElement('div');
+    gifDiv.id = 'corner-gif';
+    gifDiv.innerHTML = '<img src="static/image/pussy.gif" alt="pussy cat gif">';
+    document.body.appendChild(gifDiv);
+    gifDiv.addEventListener('mouseenter', function() {
+        gifDiv.classList.add('center');
+    });
+    gifDiv.addEventListener('mouseleave', function() {
+        gifDiv.classList.remove('center');
+    });
+})(); 

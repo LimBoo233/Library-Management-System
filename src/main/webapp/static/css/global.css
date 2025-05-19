@@ -198,4 +198,33 @@ body::before {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+#corner-gif {
+    position: fixed;
+    right: 32px;
+    bottom: 32px;
+    z-index: 9999;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    pointer-events: auto;
+    transform: none;
+    transition: none;
+}
+#corner-gif.center {
+    left: 50vw;
+    top: 50vh;
+    right: auto;
+    bottom: auto;
+    width: 100px;
+    height: 100px;
+    transform: translate(-50%, -50%) scale(6);
+}
+#corner-gif img {
+    width: 100%;
+    height: 100%;
+    display: block;
 } 
